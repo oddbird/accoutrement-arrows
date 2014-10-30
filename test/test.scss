@@ -1,0 +1,82 @@
+// Arrow Tests
+// ===========
+
+@import "true";
+
+// Test Module
+// ------------
+
+@include test-module(arrow) {
+
+  // _parse-arrow
+  // ------------
+  @include test(_parse-arrow) {
+    $test: _parse-arrow();
+    $expect: $arrows;
+    @include assert-equal($test, $expect,
+      'Returns defaults if no arrow settings passed.');
+
+    $test: _parse-arrow(2em 3em red up);
+    $expect: map-merge($arrows, (
+      direction: up,
+      size: 2em,
+      spread: 3em,
+      color: red,
+    ));
+    @include assert-equal($test, $expect,
+      'Parses combined keywords and maps.');
+  }
+
+  // _build-arrow
+  // ------------
+  @include test(_build-arrow) {
+    $test: _build-arrow(2em 3em red up);
+    $expect: (
+      border-bottom: 2em solid red,
+      border-left-width: 1.5em,
+      border-right-width: 1.5em,
+    );
+    @include assert-equal($test, $expect,
+      'Returns border values to create an arrow.');
+
+    $test: _build-arrow(2em auto red up);
+    $expect: (
+      border-bottom: 2em solid red,
+      border-left-width: 2em,
+      border-right-width: 2em,
+    );
+    @include assert-equal($test, $expect,
+      'Returns border values to create an arrow, with auto spread.');
+  }
+
+  // arrow
+  // -----
+  /* OUTPUT TEST: arrow */
+  .arrow {
+    .test {
+      @include arrow($extend: false) { left: 100%; }
+    }
+    .expect {
+      position: relative;
+
+      &:before {
+        content: " ";
+        position: absolute;
+        height: 0;
+        width: 0;
+        border: solid transparent;
+        pointer-events: none;
+        border-top: 1em solid black;
+        border-left-width: 1em;
+        border-right-width: 1em;
+        left: 100%;
+      }
+    }
+  }
+}
+
+// Report
+// ------
+
+@include report;
+

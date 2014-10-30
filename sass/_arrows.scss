@@ -1,0 +1,116 @@
+// Arrows
+// ======
+
+$arrows: (
+  direction: down,
+  size: 1em,
+  spread: auto,
+  color: black,
+);
+
+
+// Arrow Base
+// ----------
+@mixin _arrow-base {
+  content: " ";
+  position: absolute;
+  height: 0;
+  width: 0;
+  border: solid transparent;
+  pointer-events: none;
+}
+
+%_arrow-base {
+  @include _arrow-base;
+}
+
+
+// Arrow
+// -----
+@mixin arrow(
+  $arrow: $arrows,
+  $place: before,
+  $extend: true,
+  $root: relative
+) {
+  $arrow: _build-arrow($arrow);
+
+  position: $root;
+
+  &#{':' + $place} {
+    @if $extend {
+      @extend %_arrow-base;
+    } @else {
+      @include _arrow-base;
+    }
+    @include render($arrow);
+    @content;
+  }
+}
+
+// PRIVATE: Parse Arrow
+// --------------------
+@function _parse-arrow(
+  $arrow: null
+) {
+  $_return: $arrows;
+  $_numbers: ();
+
+  @if type-of($arrow) == map {
+    $_return: map-merge($_return, $arrow);
+  } @else if $arrow {
+
+    @each $val in $arrow {
+      @if type-of($val) == map {
+        $_return: map-merge($_return, $val);
+      } @else if type-of($val) == color {
+        $_return: map-merge($_return, (color: $val));
+      } @else if type-of($val) == string {
+        @if index(up down left right, $val) {
+          $_return: map-merge($_return, (direction: $val));
+        } @else if $val == auto {
+          $_return: map-merge($_return, (spread: $val));
+        }
+      } @else if type-of($val) == number {
+        $_numbers: append($_numbers, $val);
+      }
+    }
+
+    @if length($_numbers) > 0 {
+      $_return: map-merge($_return, (size: nth($_numbers, 1)));
+      @if length($_numbers) > 1 {
+        $_return: map-merge($_return, (spread: nth($_numbers, 2)));
+      }
+    }
+  }
+
+  @return $_return;
+}
+
+
+// PRIVATE: Build Arrow
+// --------------------
+@function _build-arrow(
+  $arrow
+) {
+  $arrow: _parse-arrow($arrow);
+  $_color: map-get($arrow, color);
+  $_size: map-get($arrow, size);
+  $_spread: map-get($arrow, spread);
+  $_direction: map-get($arrow, direction);
+  $_direction: if($_direction == up, top, if($_direction == down, bottom, $_direction));
+  $_opposite: opposite-position($_direction);
+
+  $_return: (border-#{$_opposite}: $_size solid $_color);
+
+  $_h: left right;
+  $_v: top bottom;
+  $_sides: if(index($_h, $_direction), $_v, $_h);
+  $_spread: if($_spread == auto, $_size, $_spread / 2);
+
+  @each $_side in $_sides {
+    $_return: map-merge($_return, (border-#{$_side}-width: $_spread));
+  }
+
+  @return $_return;
+}
